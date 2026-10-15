@@ -1,5 +1,69 @@
-bu dosyaya web projesi dersi boyunca hafta hafta yapay zekaya yazacağımız prontları ve bize verdiği cevapları ve bu cevaplardan nasıl yararlanacağımızı not edeceğiz.
-16 ekim görevi
-ai a sorulan soru:
-verdiği cevap:
-ve bu cevabı nasıl kullandım:
+16 Ekim Görevi
+ben githuptan bir uygulama geliştiricem ön lisans öğrencisiyim ve temel html ve c# dillerini biliyorum problem olarak otoparkta yer bulamayıp aynı yerde dönüp dolaşmamıza çözüm olacak bir uygulama 
+kullanıcı otoparka girmeden önce bu uygulamada boş olan yerler görülecek ve park etmeden önce plakası alınacak daha sonra dolu olan yerler kırmızı ile belirtilecek ve giderken kullanıcı çıkış yapacak bu sayede otoparkta boş boş dolanmanın önüne geçilmiş olacak benim fikrim bu şekilde sence nasıl
+
+Projenin tanıtımını hazırlamak için format belirleniyor.
+Projenin tanıtımını hazırlamak için format belirleniyor.
+AkıllıPark: Akıllı Otopark Yönetim Sistemi
+1. Projenin Amacı
+Otoparka giren sürücüler çoğu zaman boş yer aramak için aynı alanda defalarca dönmek zorunda kalıyor. Bu durum zaman kaybına, gereksiz yakıt tüketimine, trafik yoğunluğuna ve sürücülerde strese yol açıyor.
+
+AkıllıPark, sürücü otoparka girmeden önce boş yerleri görebilmesini ve girişte kendisine otomatik olarak bir yer atanmasını sağlayan web tabanlı bir sistemdir. Amaç, otoparkta boş yere dolaşmayı ortadan kaldırmaktır.
+
+2. Sistem Nasıl Çalışır?
+Doluluk görüntüleme: Sürücü, otoparka girmeden önce uygulamadan park yerlerinin anlık durumunu görür. Boş yerler yeşil, dolu yerler kırmızı gösterilir. Toplam boş yer sayısı da ekranda yer alır.
+Giriş ve plaka kaydı: Araç girişte plakasıyla sisteme kaydedilir. Plaka başta elle girilir, ilerleyen aşamada kameradan otomatik okunur.
+Otomatik yer atama: Plaka kaydedildiği anda sistem uygun bir yer atar (örneğin “Size A-12 ayrıldı”). Sürücünün ayrıca bir bildirim yapmasına gerek kalmaz. Atanan yer anında kırmızıya döner.
+Çıkış: Çıkışta plaka girilir veya okunur. Sistem o araca ait yeri otomatik olarak boşaltır, yer tekrar yeşile döner.
+3. Veri Doğruluğunu Sağlayan Özellikler
+Sistemin değeri gösterdiği bilginin doğruluğuna bağlıdır. Bu yüzden insanın hatırlamasına bağlı adımlar sisteme devredilmiştir:
+
+Otomatik yer atama: Sürücüden “park ettim” bildirimi beklenmez.
+Zaman aşımı servisi: Atanan yer 10 dakika içinde kullanılmazsa arka plan servisi (BackgroundService) yeri otomatik olarak tekrar boşa çıkarır. Böylece yanlış veya terk edilmiş rezervasyonlar yeri sonsuza kadar kapatmaz.
+Tutarsızlık kontrolleri:
+Aynı plaka içerideyken ikinci kez girişine izin verilmez.
+İçeride görünmeyen bir plakanın çıkış denemesi uyarı olarak kaydedilir.
+Kapasite dolduğunda girişe izin verilmez.
+Yönetici düzeltme paneli: Görevli, yanlış görünen bir yeri elle boş veya dolu yapabilir. Bu, sistemin hatalardan sonra toparlanmasını sağlar.
+4. Plaka Tanıma
+Plaka alma işlemi aşamalı olarak geliştirilecektir:
+
+Aşama	Yöntem
+1	Plakanın form üzerinden elle girilmesi
+2	Yüklenen fotoğraftan OCR ile plaka okuma (Tesseract / EmguCV)
+3	Canlı kameradan otomatik okuma (isteğe bağlı)
+Okunan plaka, Türk plaka formatına (34 ABC 123) uygunluk için regex ile doğrulanır ve kullanıcıya teyit ettirilir. Böylece OCR hataları büyük ölçüde azaltılır.
+
+5. Kullanılan Teknolojiler
+Arayüz: HTML, CSS, JavaScript
+Sunucu tarafı: C# / ASP.NET Core
+Veritabanı: SQLite veya SQL Server
+Arka plan işlemleri: BackgroundService
+Plaka tanıma: Tesseract veya EmguCV
+Ana veri tabloları: ParkYeri, Arac, Kayit
+6. Ek Özellikler
+Giriş-çıkış saatine göre otomatik ücret hesaplama
+Geçmiş kayıtlar ve doluluk istatistikleri
+Park yerindeki QR kod ile park onayı (isteğe bağlı)
+7. Geliştirme Planı
+Veritabanı, yer haritası (kırmızı/yeşil) ve elle plaka girişi/çıkışı
+Otomatik yer atama ve zaman aşımı servisi
+Tutarsızlık kontrolleri ve yönetici paneli
+Fotoğraftan plaka okuma
+QR onay ve canlı kamera (zaman kalırsa)
+İlk üç adım tamamlandığında proje tek başına çalışan ve sunulabilir bir sistem olur. Sonraki adımlar sisteme değer katan geliştirmelerdir.
+
+8. Beklenen Faydalar
+Sürücüler için zaman ve yakıt tasarrufu
+Otopark içi trafikte ve gürültüde azalma
+İşletmeler için doluluk takibi ve kayıt altına alınmış giriş-çıkış verisi
+Gelecekte sensör entegrasyonuyla tam otomatik doluluk algılamaya uygun, genişletilebilir bir altyapı
+İstersen bunu Word belgesi veya sunum (slayt) olarak hazırlayabilirim. Sunum için slayt sayısını ve hocana ne kadar sürede anlatacağını söylersen ona göre kısaltırım.
+
+açıklayıcı bir şekilde özet olarak tek paragraflık yazabilir misin
+
+AkıllıPark, otoparka boş yer aramak için aynı alanda defalarca dönmek zorunda kalan sürücülerin sorununu çözmek amacıyla geliştirilen web tabanlı bir otopark yönetim sistemidir. Sürücü otoparka girmeden önce uygulamadan park yerlerinin anlık durumunu görebilir; boş yerler yeşil, dolu yerler kırmızı gösterilir. Araç girişte plakasıyla sisteme kaydedildiğinde sistem otomatik olarak uygun bir yer atar ve sürücüden ayrıca bir bildirim beklemez, çıkışta plaka girildiğinde ya da okunduğunda ise yer otomatik olarak boşalır. Veri doğruluğunu korumak için atanan yer 10 dakika içinde kullanılmazsa tekrar boşa çıkaran zaman aşımı servisi, aynı plakanın çift giriş yapmasını engelleyen tutarsızlık kontrolleri ve görevlinin hatalı durumları elle düzeltebildiği bir yönetici paneli bulunur. Plaka bilgisi başlangıçta elle girilir, sonraki aşamalarda fotoğraftan veya kameradan OCR ile okunur ve Türk plaka formatına uygunluğu regex ile doğrulanır. Proje HTML, CSS ve JavaScript arayüzü ile C# / ASP.NET Core sunucu tarafı ve SQLite veya SQL Server veritabanı kullanılarak geliştirilir; böylece sürücülere zaman ve yakıt tasarrufu, işletmelere ise doluluk takibi ve kayıtlı giriş-çıkış verisi sağlanır.
+
+
+
+
