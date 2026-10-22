@@ -119,5 +119,5 @@ Okunan plaka, kullanıcıya teyit ettirilir ve regex ile doğrulanır. Böylece 
 
 Bu proje, ön lisans eğitimi kapsamında geliştirilen bir dönem projesidir.
 
-**Geliştirici:** ADIN SOYADIN
-**Bölüm / Okul:** BÖLÜMÜN, OKULUN
+**Geliştirici:** HATİCE YAĞMUR
+**Bölüm / Okul:** BİLGİSAYAR PROGRAMCILIĞI, KIRŞEHİR AHİ EVRAN ÜNİ. TEKNİK BİLİMLER MESLEK YÜKESK OKULU
