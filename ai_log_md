@@ -64,4 +64,221 @@ açıklayıcı bir şekilde özet olarak tek paragraflık yazabilir misin
 
 AkıllıPark, otoparka boş yer aramak için aynı alanda defalarca dönmek zorunda kalan sürücülerin sorununu çözmek amacıyla geliştirilen web tabanlı bir otopark yönetim sistemidir. Sürücü otoparka girmeden önce uygulamadan park yerlerinin anlık durumunu görebilir; boş yerler yeşil, dolu yerler kırmızı gösterilir. Araç girişte plakasıyla sisteme kaydedildiğinde sistem otomatik olarak uygun bir yer atar ve sürücüden ayrıca bir bildirim beklemez, çıkışta plaka girildiğinde ya da okunduğunda ise yer otomatik olarak boşalır. Veri doğruluğunu korumak için atanan yer 10 dakika içinde kullanılmazsa tekrar boşa çıkaran zaman aşımı servisi, aynı plakanın çift giriş yapmasını engelleyen tutarsızlık kontrolleri ve görevlinin hatalı durumları elle düzeltebildiği bir yönetici paneli bulunur. Plaka bilgisi başlangıçta elle girilir, sonraki aşamalarda fotoğraftan veya kameradan OCR ile okunur ve Türk plaka formatına uygunluğu regex ile doğrulanır. Proje HTML, CSS ve JavaScript arayüzü ile C# / ASP.NET Core sunucu tarafı ve SQLite veya SQL Server veritabanı kullanılarak geliştirilir; böylece sürücülere zaman ve yakıt tasarrufu, işletmelere ise doluluk takibi ve kayıtlı giriş-çıkış verisi sağlanır.
 
+5 Kasım Görevi
 
+ ben: peki bu projenin prototipi nasıl olmalı
+
+Bir ön lisans dönem projesi prototipi için yeterli, çünkü çekirdek akışı (görme, giriş, yer atama, çıkış, hata kontrolleri) baştan sona gösteriyor. Ama ekranda nasıl göründüğünü ben görmedim, sadece koduna göre yorumluyorum. Sen açıp bakınca farklı bir şey hissedersen bana söyle.
+
+İyi olan yanlar
+
+Yeşil boş, kırmızı dolu çok sezgisel. Altta açıklama (legend) de var.
+Boş yer sayısı büyük yazıyla en üstte duruyor, sürücünün aradığı bilgi bu.
+Hata mesajları yeşil/kırmızı kenarlıkla ayrışıyor ve ne olduğunu açık yazıyor.
+Telefonda park yerleri 5'erli iki sıraya dönüyor.
+Zayıf olan yanlar
+
+Sadece renge güveniliyor. Kırmızı-yeşil ayrımında zorlanan kişiler (renk körlüğü) için yerler ayırt edilemeyebilir. Yerin üzerinde “boş” yazması bunu kısmen çözüyor, ama küçük simgeler (✓ ve ✗) eklenirse çok daha net olur.
+Yazılar küçük. Park yerinin altındaki plaka veya “boş” yazısı 10 piksel, telefonda zor okunur.
+Sürücü kendi yerini bulamıyor. Giriş yapınca “Size A-12 ayrıldı” mesajı çıkıyor ama haritada A-12'yi gösteren bir vurgu yok. Sürücü ekranının asıl amacı bu olduğu için en önemli eksik budur.
+Girişin nerede olduğu belli değil. Yolun ortasında “GİRİŞ” yazıyor ama kapı, yön oku veya yer numaralarına göre yol tarifi yok.
+Üç ekran aynı sayfada. Gerçekte sürücü, kiosk ve yönetici ayrı cihazlarda olur. Sunumda bunu “gerçekte ayrı olacak” diye açıklaman gerekir.
+Yönetici paneli şifresiz. Prototip için sorun değil, ama sunumda söylemen iyi olur.
+Önerim: Sunumdan önce üç küçük düzeltme yeterli: yazıları büyütmek, durum simgeleri eklemek ve atanan yeri haritada yanıp sönen bir çerçeveyle vurgulamak. Bunlar prototipi gözle görülür biçimde daha anlaşılır yapar.
+
+İstersen bu üç düzeltmeyi hem sade HTML sürümüne hem C# sürümünün arayüzüne ekleyeyim.
+
+ ben: bu dediklerini ekleyerek yeni bir prototip oluşturmanı istesem
+
+AkıllıPark Prototipi v2
+Yapıt
+·Yalnızca siz
+AkıllıPark prototipinin ikinci sürümünü hazırladım, yukarıdaki yayın kartından açıp deneyebilirsin. Sade HTML sürümünün kodu prototip-v2/index.html dosyasında, C# sürümünün arayüzü de aynı değişikliklerle güncellendi. Ekranda nasıl göründüğünü ben görmedim, sadece kodun JavaScript sözdizimini kontrol ettim. Sen açıp bakınca bir şey gözüne takılırsa söyle.
+
+Yapılan iyileştirmeler
+
+Atanan yer haritada vurgulanıyor: Giriş yapınca yerin etrafında yanıp sönen beyaz bir çerçeve ve “SİZİN YERİNİZ” etiketi çıkıyor. Haritanın üstünde de bir bilgi kutusu görünüyor, örneğin “Yeriniz: A-09 · girişten sonra alt sırada, 3. yer · 60 sn içinde park edin”. Park onaylanınca “✓ park edildi” yazıyor.
+Renge ek olarak simge ve desen var: Boş yer ✓, ayrılmış yer ⏳, dolu yer ✕ simgesi taşıyor. Dolu yerler ayrıca çizgili desenli, böylece kırmızı-yeşil ayrımı zor olanlar da ayırt edebiliyor.
+Yazılar büyütüldü: Park yeri kodu ve alt yazılar büyüdü, telefonda yerler daha yüksek.
+Giriş ve çıkış belli: Yolun iki ucunda “GİRİŞ ➜” ve “➜ ÇIKIŞ” işaretleri var.
+Ekranların rolü açıklandı: Her sekmede, gerçekte bu ekranın nerede olacağı (sürücünün telefonu, giriş kiosku) ve yönetici panelinin şifreyle korunacağı yazıyor.
+Dosyalar
+
+prototip-v2/index.html: sade HTML sürümü, GitHub Pages’te çalışır.
+AkilliPark.zip: C# sürümü, yeni arayüzle yeniden paketlendi. Eski zip’in yerine bunu kullan.
+Eski index.html aynen duruyor, istersen v1 olarak saklayabilirsin.
+Denemek için: Giriş / Çıkış sekmesinde 34 ABC 123 ile giriş yap, sonra Sürücü ekranına dönüp haritadaki yanıp sönen çerçeveye bak.
+
+ben: tamamdır şimdi de bu eklentilerimizi kodlarımıza eklemeni istiyorum
+
+Önerdiğim iyileştirmeleri bir önceki adımda iki koda da ekledim, o yüzden dosyaları tekrar ekledim.
+
+prototip-v2/index.html: Sade HTML sürümü, yeni özelliklerle.
+AkilliPark.zip: C# projesi. İçindeki wwwroot/index.html de güncel.
+AkilliPark/wwwroot/index.html: C# projesinin arayüz dosyası, tek başına indirmek istersen.
+İki sürümde de aynı eklemeler var: atanan yerin yanıp sönen çerçeveyle vurgulanması ve haritanın üstündeki “Yeriniz: A-09...” kutusu, ✓ ⏳ ✕ simgeleri ile dolu yerlerdeki çizgili desen, büyütülmüş yazılar, “GİRİŞ ➜” ve “➜ ÇIKIŞ” işaretleri ve her sekmedeki rol açıklamaları. Eski AkilliPark.zip veya index.html dosyalarını GitHub’a yüklediysen, bunlarla değiştir.
+
+“Eklentiler” derken başka bir şeyi kastediyorsan söyle. Mesela ücret hesaplama, geçmiş kayıt ve doluluk istatistikleri ya da plakanın fotoğraftan okunması gibi daha önce konuştuğumuz ek özelliklerden birini mi eklememi istiyorsun? Hangisi olduğunu yazarsan ondan başlarım.
+
+Akillipark
+ZIP
+Index
+Kod
+·HTML
+Index
+Kod
+·HTML
+ben: peki ben bu kodları githupta nereye eklemem gerek
+Kodları repository’nin ana klasörüne (root) eklemen gerekiyor. GitHub’da repository’ye girip Add file → Upload files ile yüklersin. Sonunda repository’n şöyle görünmeli:
+
+akillipark/
+├── README.md
+├── prototip-v2/
+│   └── index.html
+└── AkilliPark/
+    ├── Program.cs
+    ├── Models.cs
+    ├── ZamanAsimiServisi.cs
+    ├── AkilliPark.csproj
+    ├── .gitignore
+    └── wwwroot/
+        └── index.html
+GitHub’da çalışan prototip: prototip-v2/index.html. GitHub Pages sadece bu sade HTML sürümünü gösterebilir.
+C# kodları: AkilliPark klasörü. Bunlar GitHub’da sadece saklanır ve okunur, çalıştırmak için bilgisayarında dotnet run gerekir.
+README.md: Ana klasörde durmalı, böylece repository’nin ana sayfasında otomatik görünür.
+
+Dikkat edeceklerin
+
+Zip dosyasını olduğu gibi yükleme, önce çıkar. Yoksa kodlar GitHub’da okunmaz.
+Daha önce eski index.html veya akillipark.html yüklediysen, onları repository’den silmeyi unutma. Aksi halde aynı projenin eski ve yeni sürümleri karışır. Silmek için dosyaya tıkla, sağ üstteki üç nokta menüsünden Delete file de.
+bin, obj klasörlerini ve .db dosyasını yükleme. .gitignore bunları zaten dışarıda bırakır.
+
+ben: zip dosyasını nasıl öne çıkarmam gerek anlamadım
+
+“Çıkar” derken zip’i açmanı kastetmiştim, öne çıkarmanı değil. Zip, içine birden fazla dosyanın sıkıştırılıp konduğu bir pakettir. GitHub’a bu paketi değil, içindeki dosyaları yüklemelisin. Yani önce zip’i açman gerekiyor.
+
+Windows’ta
+
+İndirdiğin AkilliPark.zip dosyasını bul (genelde İndirilenler klasöründedir).
+Üzerine sağ tıkla.
+Tümünü ayıkla (Extract All) seçeneğine tıkla.
+Açılan pencerede Ayıkla (Extract) butonuna bas.
+
+Zip’in yanında aynı isimde normal bir klasör oluşur. İçine girince Program.cs, Models.cs, wwwroot gibi dosyaları görürsün. GitHub’a yükleyeceğin şey bu klasörün içindekiler.
+
+Mac’te
+Zip dosyasına çift tıkla, yanında klasör kendiliğinden açılır.
+
+Telefondan yapıyorsan
+Dosya yöneticisinde zip’e uzun bas, Çıkar veya Aç de. Yine de GitHub’a klasör yüklemek bilgisayardan çok daha kolay, o yüzden bu işi bilgisayarda yapmanı öneririm.
+
+Sonra ne yapacaksın
+Açtığın klasörün içindekileri, README.md ve prototip-v2 klasörüyle birlikte GitHub’da Add file → Upload files ekranına sürükleyeceksin. Zip dosyasının kendisini yükleme.
+
+Hangi adımda takılırsan yaz, oradan devam edelim.
+
+ben: ayıkla diye bir seçenek çıkmıyor
+
+Cihazına göre menü değişebiliyor, aşağıdaki yolları sırayla dene.
+
+1. Zip’e çift tıkla (en kolayı)
+Zip dosyasına çift tıkla, bir pencere açılır. Pencerenin üst kısmındaki araç çubuğunda Tümünü ayıkla (veya Extract all) yazısı çıkar. Ona tıkla, sonra Ayıkla’ya bas.
+
+2. Windows 11'de sağ tık menüsü
+Sağ tıkladığında kısa bir menü açılır. Altındaki Daha fazla seçenek göster’e tıkla, uzun menüde Tümünü ayıkla görünür. Kısa menüde de ismi “Tümünü ayıkla” olarak geçebilir, “Ayıkla” kelimesini aramak yerine bu ifadeye bak.
+
+3. Hâlâ çıkmıyorsa
+Ücretsiz 7-Zip programını kur. Sonra zip’e sağ tıkla, 7-Zip → Extract Here (Buraya çıkar) seç.
+
+Zip’in çözüldüğünü nasıl anlarsın?
+Zip’in yanında aynı isimde, üzerinde fermuar simgesi olmayan normal bir klasör oluşur. İçine girince Program.cs, Models.cs ve wwwroot klasörünü görürsen işlem tamam.
+
+Telefondan mı bakıyorsun? Öyleyse bilgisayarda yapman çok daha rahat olur, çünkü telefondan klasör yüklemek GitHub’ın web sitesinde zor. Zip’i bilgisayara aktar veya bu sohbeti bilgisayardan açıp dosyayı oradan indir.
+
+Bunlardan hangisini denediğini ve ekranda ne gördüğünü yazarsan sana daha net yol gösteririm.
+
+ben: 1.yi yaptım ayıklayıp dediğin yere attım
+
+Güzel, zip’i açtın. Şimdi GitHub’a yükleme kısmı kaldı.
+
+1. Klasörü kontrol et
+Bilgisayarda akillipark klasörünün içinde şunlar olmalı:
+
+README.md
+prototip-v2 klasörü (içinde index.html)
+AkilliPark klasörü (içinde Program.cs, Models.cs, wwwroot gibi dosyalar)
+
+prototip-v2 ve README.md ayrı indirdiğin dosyalar olduğu için, bunları da aynı klasöre elle koyman gerekebilir. Zip’in içinde sadece AkilliPark klasörü vardı.
+
+2. GitHub’da yükleme ekranını aç
+
+github.com’da akillipark repository’ne gir.
+Add file → Upload files’a tıkla.
+
+3. Sürükle
+Bilgisayarda akillipark klasörünün içine gir, içindekilerin hepsini seç (Ctrl + A) ve tarayıcıdaki yükleme alanına sürükle. Klasörün kendisini değil, içindekileri sürüklemelisin. Klasörler alt dosyalarıyla birlikte yüklenir.
+
+4. Commit et
+Yükleme bitince sayfanın altındaki kutuya kısa bir not yaz (örneğin “AkıllıPark prototip v2 ve C# sürümü eklendi”) ve yeşil Commit changes butonuna bas.
+
+5. Kontrol
+Repository ana sayfasında README.md, prototip-v2 ve AkilliPark görünüyorsa tamamdır.
+
+Bir adımda takılırsan ekranda ne gördüğünü yaz, oradan devam edelim.
+
+ ben: bunlar çıktı
+
+Reviewing the AkilliPark project folder contents.
+Bu doğru, zip’i düzgün açmışsın. Gördüğün dosyalar AkilliPark klasörünün içindekiler: wwwroot, .gitignore, AkilliPark.csproj, Models.cs, Program.cs ve ZamanAsimiServisi.cs. Eksiksiz hepsi orada.
+
+Şimdi yapman gereken
+
+Bir üst klasöre çık. Şu an AkilliPark klasörünün içindesin. Üstteki adres çubuğunda veya sol üstteki geri okuyla bir adım geri git. Böylece AkilliPark klasörünün kendisini görürsün.
+Bu klasörü GitHub’a sürükle. GitHub’da repository’nde Add file → Upload files’a tıkla. Sonra bilgisayarda AkilliPark klasörünü (içindekileri değil, klasörün kendisini) yükleme alanına sürükle. Klasör adı GitHub’da da AkilliPark olarak görünür ve içindeki her şey düzenli kalır.
+Commit changes’e bas.
+Ayrıca iki şey daha yükleyeceksin
+
+Bunlar zip’in içinde yoktu, benim sana ayrı dosya olarak verdiklerimdi:
+
+README.md: sohbetteki README dosya kartından indir.
+prototip-v2/index.html: v2 prototipi gönderdiğim dosya kartından indir.
+prototip-v2/index.html dosyasını yüklerken GitHub’da klasörün oluşması için, Add file → Create new file’a tıkla, dosya adı kutusuna prototip-v2/index.html yaz ve indirdiğin dosyanın içeriğini yapıştır. README.md dosyasını ise doğrudan Upload files ile yükleyebilirsin.
+
+Yükleme bitince repository ana sayfasında AkilliPark, prototip-v2 ve README.md görünmeli. Bir şey yoluna girmezse ekran görüntüsünü at, birlikte bakalım.
+
+ben: bunlar çıktı
+
+Checking the repo name and missing hidden files
+Yükleme doğru görünüyor. Dosyaların başında /AkilliPark/ yazması, hepsinin AkilliPark klasörünün içine konacağı anlamına geliyor. wwwroot/index.html de doğru yerde.
+
+Şimdi yapacakların
+
+Sayfayı aşağı kaydır. Gördüğün Değişiklikleri kaydet kutusunda ilk satıra kısa bir not yaz, örneğin C# sunucu kodları eklendi.
+En alttaki yeşil Değişiklikleri kaydet (Commit changes) butonuna bas.
+Ana sayfaya dönünce AkilliPark klasörünün göründüğünü kontrol et.
+Listede .gitignore yok. Adı nokta ile başlayan gizli dosyaları tarayıcı bazen yüklemeye almıyor. Bu önemli değil, proje onsuz da çalışır. İstersen sonra Add file → Create new file’dan AkilliPark/.gitignore adıyla ekleyebilirsin, içine bin/, obj/ ve *.db satırlarını yazman yeterli.
+
+Sonraki adım: Bu commit bitince iki şey kalıyor, README.md ve prototip-v2/index.html. Yükleme ekranına yine sürükleyerek veya Create new file ile ekleyebilirsin, adımları tekrar yazayım mı?
+
+ben: commit changes kısmına bu çıktıya göre yazmam gerekenler atar mısın
+
+İki kutu var, ikisini de aşağıdaki gibi doldurabilirsin.
+
+Üstteki kutu (başlık, “Dosyaları yükleme yoluyla ekleyin” yazan yer):
+
+AkıllıPark C# sunucu kodları eklendi
+Alttaki kutu (isteğe bağlı açıklama):
+
+ASP.NET Core ve SQLite tabanlı sunucu eklendi.
+- Program.cs: API uç noktaları (giriş, çıkış, onay, yerler, kayıtlar)
+- Models.cs: ParkYeri, Kayit, Gunluk tabloları ve plaka doğrulama
+- ZamanAsimiServisi.cs: Süresi dolan yerleri otomatik boşaltan arka plan servisi
+- wwwroot/index.html: Sunucuya bağlı arayüz (yer vurgulama, durum simgeleri)
+Alttaki kutuyu boş bırakmanda da bir sakınca yok, sadece başlık yeterli.
+
+Bundan sonra aşağıdaki seçeneklerden Doğrudan main dalına commit yap (Commit directly to the main branch) işaretli olsun, sonra yeşil Değişiklikleri kaydet butonuna bas.
+
+README ve prototip-v2 dosyalarını eklerken kullanabileceğin başlıklar:
+
+README eklendi
+Prototip v2 (saf HTML sürümü) eklendi
