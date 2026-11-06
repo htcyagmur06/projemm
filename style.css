@@ -1,0 +1,113 @@
+/* AkıllıPark - stil dosyası */
+/* Yazı tipleri HTML içindeki Google Fonts bağlantısından gelir. */
+
+:root{--bg:#e9e8e3;--panel:#fbfaf7;--ink:#1f2326;--mute:#667;--line:#cfcdc6;--asphalt:#2b3035;--paint:#f2f2ee;--free:#2f9e63;--busy:#d6453d;--wait:#d9a21b;--btn:#1f2326;--btnink:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181b;--panel:#1f2327;--ink:#ecebe6;--mute:#9aa0a6;--line:#383d42;--asphalt:#2b3035;--btn:#ecebe6;--btnink:#15181b}}
+
+:root[data-theme="dark"]{--bg:#15181b;--panel:#1f2327;--ink:#ecebe6;--mute:#9aa0a6;--line:#383d42;--btn:#ecebe6;--btnink:#15181b}
+
+*{box-sizing:border-box}
+
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
+
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+
+h1{font:700 34px/1 "Barlow Condensed",Impact,sans-serif;margin:0}
+
+h2{font:700 22px/1.1 "Barlow Condensed",Impact,sans-serif;margin:0 0 10px}
+
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+
+header p{margin:4px 0 0;color:var(--mute)}
+
+.count{font:700 54px/0.9 "Barlow Condensed",Impact,sans-serif;text-align:right}
+
+.count small{display:block;font:500 14px Barlow,sans-serif;color:var(--mute)}
+
+nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+
+nav button{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:9px 14px;border-radius:6px;font:inherit;cursor:pointer}
+
+nav button[aria-selected="true"]{background:var(--btn);color:var(--btnink);border-color:var(--btn)}
+
+button:focus-visible,input:focus-visible,.spot:focus-visible{outline:3px solid var(--wait);outline-offset:2px}
+
+.lot{background:var(--asphalt);border-radius:10px;padding:14px 12px;color:var(--paint)}
+
+.row{display:grid;grid-template-columns:repeat(10,1fr);gap:0;border-top:3px solid var(--paint);border-bottom:3px solid var(--paint)}
+
+.lane{height:56px;display:flex;align-items:center;justify-content:space-between;color:#c9ced6;font:600 15px "Barlow Condensed",sans-serif;letter-spacing:.08em;background:repeating-linear-gradient(90deg,transparent 0 22px,#59606a 22px 40px) center/100% 2px no-repeat}
+
+.lane span{background:var(--asphalt);padding:0 10px}
+
+.spot{height:96px;position:relative;border:0;border-left:3px solid var(--paint);border-right:0;background:transparent;color:var(--paint);font:600 20px "Barlow Condensed",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:default;padding:0}
+
+.row .spot:last-child{border-right:3px solid var(--paint)}
+
+.spot small{font:500 13px Barlow,sans-serif}
+
+.spot.free{background:color-mix(in srgb,var(--free) 78%,#000)}
+
+.spot.busy{background:repeating-linear-gradient(135deg,rgba(0,0,0,.2) 0 6px,transparent 6px 12px),color-mix(in srgb,var(--busy) 82%,#000)}
+
+.spot.wait{background:color-mix(in srgb,var(--wait) 80%,#000)}
+
+.admin .spot{cursor:pointer}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;color:var(--mute);font-size:14px}
+
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-top:16px}
+
+.form{display:flex;gap:8px;flex-wrap:wrap}
+
+input{flex:1 1 180px;padding:11px 12px;font:600 20px "Barlow Condensed",sans-serif;letter-spacing:.06em;text-transform:uppercase;border:2px solid var(--ink);border-radius:6px;background:var(--panel);color:var(--ink)}
+
+.btn{padding:11px 18px;border:0;border-radius:6px;font:inherit;font-weight:500;cursor:pointer;background:var(--btn);color:var(--btnink)}
+
+.btn.in{background:var(--free);color:#fff}.btn.out{background:var(--busy);color:#fff}
+
+.msg{margin-top:12px;padding:10px 12px;border-radius:6px;border-left:5px solid var(--line);background:var(--bg);min-height:44px}
+
+.msg.ok{border-color:var(--free)}.msg.err{border-color:var(--busy)}
+
+ul{list-style:none;margin:0;padding:0}
+
+li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+
+li:last-child{border:0}
+
+li .t{color:var(--mute);font-size:13px;white-space:nowrap}
+
+li.w{color:var(--busy)}
+
+.small{padding:6px 10px;font-size:14px}
+
+.hint{color:var(--mute);font-size:14px;margin:0 0 10px}
+
+.hidden{display:none}
+
+@media(max-width:560px){.row{grid-template-columns:repeat(5,1fr)}.spot{height:84px;font-size:17px}.count{font-size:44px}}
+
+.ic{font-size:18px;line-height:1}
+
+.gate{background:var(--paint);color:#1f2326;padding:2px 10px;border-radius:4px;font-size:15px}
+
+.legend{font-size:15px}
+
+.mine{outline:4px solid #fff;outline-offset:-7px;animation:pulse 1.2s ease-in-out infinite;z-index:1}
+
+.mine::after{content:"SİZİN YERİNİZ";position:absolute;top:3px;font:700 10px Barlow,sans-serif;background:#fff;color:#111;padding:1px 5px;border-radius:3px;white-space:nowrap}
+
+@keyframes pulse{0%,100%{outline-color:#fff}50%{outline-color:rgba(255,255,255,.15)}}
+
+@media(prefers-reduced-motion:reduce){.mine{animation:none}}
+
+.mine-banner{background:var(--btn);color:var(--btnink);border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:17px}
+
+.mine-banner span{font-weight:700}
