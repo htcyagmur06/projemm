@@ -5,7 +5,7 @@ Otoparka girmeden önce boş yerleri gösteren, girişte plakayı kaydedip sür�
 
 > **Durum:** Tıklanabilir HTML prototipi hazır (`index.html`). ASP.NET Core ve veritabanı sürümü geliştirme aşamasındadır.
 
-**Canlı prototip:** `https://KULLANICI_ADIN.github.io/akillipark/` (GitHub Pages'i açtıktan sonra kendi adresinle değiştir)
+**Canlı prototip:** `htcyagmur06.githup.io/projemm/` (GitHub Pages'i açtıktan sonra kendi adresinle değiştir)
 
 ---
 
