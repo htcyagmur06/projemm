@@ -1,4 +1,4 @@
-# projemm
+
 # AkıllıPark: Akıllı Otopark Yönetim Sistemi
 
 Otoparka girmeden önce boş yerleri gösteren, girişte plakayı kaydedip sürücüye otomatik park yeri atayan web tabanlı otopark yönetim sistemi.
