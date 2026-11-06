@@ -64,7 +64,7 @@ açıklayıcı bir şekilde özet olarak tek paragraflık yazabilir misin
 
 AkıllıPark, otoparka boş yer aramak için aynı alanda defalarca dönmek zorunda kalan sürücülerin sorununu çözmek amacıyla geliştirilen web tabanlı bir otopark yönetim sistemidir. Sürücü otoparka girmeden önce uygulamadan park yerlerinin anlık durumunu görebilir; boş yerler yeşil, dolu yerler kırmızı gösterilir. Araç girişte plakasıyla sisteme kaydedildiğinde sistem otomatik olarak uygun bir yer atar ve sürücüden ayrıca bir bildirim beklemez, çıkışta plaka girildiğinde ya da okunduğunda ise yer otomatik olarak boşalır. Veri doğruluğunu korumak için atanan yer 10 dakika içinde kullanılmazsa tekrar boşa çıkaran zaman aşımı servisi, aynı plakanın çift giriş yapmasını engelleyen tutarsızlık kontrolleri ve görevlinin hatalı durumları elle düzeltebildiği bir yönetici paneli bulunur. Plaka bilgisi başlangıçta elle girilir, sonraki aşamalarda fotoğraftan veya kameradan OCR ile okunur ve Türk plaka formatına uygunluğu regex ile doğrulanır. Proje HTML, CSS ve JavaScript arayüzü ile C# / ASP.NET Core sunucu tarafı ve SQLite veya SQL Server veritabanı kullanılarak geliştirilir; böylece sürücülere zaman ve yakıt tasarrufu, işletmelere ise doluluk takibi ve kayıtlı giriş-çıkış verisi sağlanır.
 
-5 Kasım Görevi
+6 Kasım Görevi
 
  ben: peki bu projenin prototipi nasıl olmalı
 
@@ -282,3 +282,322 @@ README ve prototip-v2 dosyalarını eklerken kullanabileceğin başlıklar:
 
 README eklendi
 Prototip v2 (saf HTML sürümü) eklendi
+ben: hocamız bu yaptığımız c# html java kodlarından soru soracak temel kodları bana açıklayabilir misin açıklayıcı bir şekilde
+
+Hoca büyük ihtimalle kodun nasıl çalıştığını ve neden öyle yazıldığını soracak. Önce genel mantığı, sonra her dosyanın temel kısımlarını anlatayım. “Java” derken JavaScript’i kastettiğini varsayıyorum, projede Java yok.
+
+Genel mantık: üç parça birlikte çalışıyor
+HTML/CSS ekranda ne görüneceğini belirler (kutular, butonlar, renkler).
+JavaScript ekranı canlı tutar. Butona basılınca sunucuya istek atar, gelen cevapla ekranı günceller.
+C# sunucudur. Kuralları (plaka doğru mu, yer var mı) kontrol eder ve verileri veritabanında saklar.
+Bunlar API denen adresler üzerinden konuşur. Örneğin JavaScript /api/giris adresine plaka gönderir, C# işi yapıp cevap döner. Buna istemci-sunucu (client-server) yapısı denir.
+
+C# kısmı
+Models.cs: veri tabloları
+csharp
+public class ParkYeri
+{
+    public int Id { get; set; }
+    public string Kod { get; set; } = "";     // A-01, A-02...
+    public string Durum { get; set; } = "Bos"; // Bos, Ayrildi, Dolu
+    public string? Plaka { get; set; }
+    public DateTime? Bitis { get; set; }       // zaman aşımı anı
+}
+Her sınıf veritabanında bir tablo, her özellik (property) bir sütun olur. Burada Entity Framework Core kullandım. Bu araç, SQL yazmadan C# sınıflarıyla veritabanını yönetmeni sağlar (buna ORM denir). AppDb sınıfı (DbContext) veritabanıyla bağlantıyı temsil eder. Üç tablo var: ParkYeri (anlık durum), Kayit (giriş-çıkış geçmişi), Gunluk (yönetici uyarıları).
+
+Plaka doğrulama (regex)
+
+csharp
+new(@"^(0[1-9]|[1-7][0-9]|8[01])[A-Z]{1,3}\d{2,4}$")
+0[1-9]|[1-7][0-9]|8[01] il kodu (01-81)
+[A-Z]{1,3} 1 ila 3 harf
+\d{2,4} 2 ila 4 rakam
+
+Önce Normalize fonksiyonu plakayı büyük harfe çevirip boşlukları siler. Böylece “34 abc 123” de “34ABC123” olarak kontrol edilir.
+
+Program.cs: sunucunun kalbi
+csharp
+builder.Services.AddDbContext<AppDb>(o => o.UseSqlite("Data Source=akillipark.db"));
+builder.Services.AddHostedService<ZamanAsimiServisi>();
+
+İlk satır veritabanını SQLite dosyası olarak ayarlar. İkinci satır arka plan servisini sisteme ekler.
+
+csharp
+app.MapGet("/api/yerler", ...)    // veri OKUMAK için
+app.MapPost("/api/giris", ...)    // veri GÖNDERMEK/DEĞİŞTİRMEK için
+
+GET veri okumak, POST işlem yaptırmak için kullanılır. Bu yapıya minimal API denir.
+
+Giriş işleminin akışı (en önemli kısım)
+
+/api/giris içinde sırasıyla şunlar olur:
+
+Plaka temizlenir ve regex ile kontrol edilir. Hatalıysa 400 BadRequest döner.
+Plaka zaten içerideyse 409 Conflict döner (çift giriş engeli).
+Boş yer aranır. Yoksa yine 409 döner (otopark dolu).
+Yer Ayrildi durumuna alınır ve Bitis zamanı 60 saniye sonraya ayarlanır.
+Kayit tablosuna giriş eklenir, SaveChangesAsync() ile veritabanına yazılır.
+“Size A-09 ayrıldı” mesajı 200 Ok ile döner.
+
+Çıkışta plakanın yeri bulunur, Bos yapılır, kaydın çıkış zamanı yazılır.
+
+ZamanAsimiServisi.cs: otomatik boşaltma
+csharp
+public class ZamanAsimiServisi(IServiceScopeFactory fabrika) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken durdur)
+    {
+        while (!durdur.IsCancellationRequested)
+        {
+            // süresi dolan "Ayrildi" yerleri bul ve boşalt
+            await Task.Delay(1000, durdur);   // 1 saniye bekle
+        }
+    }
+}
+
+Sunucu çalıştığı sürece arka planda sonsuz döngüde çalışır. Her saniye süresi dolmuş rezervasyonları arar ve yeri boşaltır. Sürücü hiçbir şey yapmasa bile yer sonsuza kadar kırmızı kalmaz.
+
+HTML ve CSS kısmı
+
+HTML sayfanın iskeletidir:
+
+<nav> içindeki üç buton (Sürücü, Giriş/Çıkış, Yönetici) sekmelerdir.
+<div id="rowA"> ve <div id="rowB"> park yeri sıralarıdır. Kutuları JavaScript buraya doldurur.
+<input id="plate"> plaka kutusu, <button id="bIn"> ve <button id="bOut"> giriş/çıkış butonlarıdır.
+
+CSS görünümü belirler:
+
+Park yerleri display:grid; grid-template-columns:repeat(10,1fr) ile 10 eşit sütuna dizilir.
+.spot.free, .spot.wait, .spot.busy sınıfları yeşil, sarı ve kırmızıyı verir.
+:root{--free:#2f9e63;...} ile renkler değişken olarak tanımlanır, tek yerden değiştirilir.
+@media(max-width:560px) ile telefonda yerler 5'erli dizilir (responsive tasarım).
+.mine sınıfı ve @keyframes pulse atanan yerin yanıp sönmesini sağlar.
+JavaScript kısmı
+Sunucuyla konuşma
+js
+async function api(url, method='GET', body){
+  const r = await fetch(url, {method, headers:{...}, body: JSON.stringify(body)});
+  ...
+}
+
+fetch sunucuya istek atar. async/await ise cevap gelene kadar bekler, sayfayı dondurmaz.
+
+Ekranı sürekli güncelleme
+js
+setInterval(yenile, 1000);
+
+Her saniye /api/yerler adresinden güncel durumu çeker ve render() ile ekranı yeniden çizer. Böylece başka birinin giriş yaptığı veya sürenin dolduğu anında görünür.
+
+render fonksiyonu
+
+Her park yeri için bir buton oluşturur (createElement), durumuna göre sınıf verir (free, wait, busy) ve simge ekler (✓, ⏳, ✕). Boş yer sayısını da buradan hesaplar:
+
+js
+const free = spots.filter(s => s.durum === 'Bos').length;
+Olay yakalama
+js
+$('bIn').onclick = () => islem('giris');
+
+Butona basılınca islem fonksiyonu plakayı sunucuya yollar, cevap mesajını ekranda gösterir ve haritayı yeniler. mySpot değişkeni, giriş mesajından yer kodunu (A-09) alıp o yeri yanıp sönerek vurgulamak için kullanılır.
+
+Hocanın sorabileceği sorular ve kısa cevaplar
+Veri doğruluğunu nasıl sağlıyorsun? Otomatik yer atama, zaman aşımı servisi, çift giriş engeli, geçersiz çıkış uyarısı ve yönetici düzeltme paneli ile.
+Neden veritabanı kullandın? Sayfa yenilenince veya sunucu kapanınca veri kaybolmasın diye. İlk prototipte veri tarayıcıdaydı, silinirdi.
+GET ile POST farkı nedir? GET veri okur, POST işlem yaptırır veya veri gönderir.
+Regex ne işe yarıyor? Plakanın Türk plaka formatına uyup uymadığını kontrol eder.
+BackgroundService nedir? Sunucu çalıştığı sürece arka planda kendi kendine çalışan görevdir.
+Çok kişi aynı anda giriş yaparsa? Prototipte tek veritabanı ve sıralı işleme yeterli. Gerçek sistemde aynı yerin iki kişiye atanmasını önlemek için ek önlem (kilitleme) gerekir. Bunu “geliştirilecek nokta” olarak söylemek dürüst ve olgun bir cevap olur.
+Gerçek hayatta nasıl kullanılır? Giriş kapısında kamera plakayı okur, sürücü telefonundan haritaya bakar. Prototipte bunlar elle girişle simüle ediliyor.
+
+Bir tavsiye: Sunumdan önce C# projesini bir kez dotnet run ile kendi bilgisayarında çalıştır ve giriş-çıkış akışını dene. Ben bu ortamda C# kodunu çalıştırıp test edemedim, sunumda sürpriz yaşamamak için önceden denemen iyi olur.
+
+İstersen bu anlatımı kısa bir sunum notuna veya kendi cümlelerinle çalışabileceğin bir soru-cevap kartına çevireyim.
+
+ben: bu uyulamanın css kodlarını da istiyorum
+
+CSS kodlarını style.css dosyası olarak hazırladım. Projedeki iki index.html dosyasının içinde zaten <style> etiketi arasında duruyordu, ben hepsini aynen alıp ayrı bir dosyaya çıkardım. Dosya şu an sadece görmen ve incelemen için, projede kullanılması için ek bir şey yapman gerekmiyor.
+
+CSS’in bölümleri
+
+:root{...}: Renk değişkenleri (--free yeşil, --busy kırmızı, --wait sarı, --asphalt asfalt grisi). Renkleri tek yerden değiştirebilirsin.
+@media (prefers-color-scheme:dark): Telefon veya bilgisayar karanlık moddaysa renkleri koyu temaya çevirir.
+.lot, .row, .lane: Otopark zemini, iki sıra park yeri ve ortadaki yol.
+.spot, .spot.free, .spot.wait, .spot.busy: Park yeri kutuları ve durum renkleri. Dolu yerlerin çizgili deseni .busy içindedir.
+.mine ve @keyframes pulse: Atanan yerin yanıp sönen çerçevesi.
+.mine-banner: Haritanın üstündeki “Yeriniz: A-09...” kutusu.
+.panel, .form, input, .btn, .msg: Giriş/çıkış formu, butonlar ve mesaj kutusu.
+@media(max-width:560px): Telefonda yerleri 5'erli sıraya dizer.
+
+Sınıf adları HTML ve JavaScript ile bağlantılı. Örneğin free, wait, busy adlarını CSS’te değiştirirsen JavaScript’teki karşılıklarını da değiştirmen gerekir. Renkleri değiştirmek istiyorsan sadece :root kısmındaki hex kodlarına dokunman yeterli ve güvenli.
+
+Yazı tipleri CSS’in içinde değil. Barlow ve Barlow Condensed, HTML’in <head> kısmındaki Google Fonts bağlantısıyla yükleniyor. CSS’i ayrı dosya olarak kullanırsan o bağlantıyı HTML’de tutmalısın.
+
+İstersen CSS’i projede de ayrı dosya olarak kullanacak şekilde düzenleyebilirim. Bu durumda HTML’e <link rel="stylesheet" href="style.css"> satırı eklenir, style.css wwwroot içine konur ve kodlar daha düzenli olur.
+
+Style
+Kod
+·CSS
+
+ben: hani demssin ya readme kısmına koy dosyayı diiye o nasıl olacak
+
+README, repository’nin ana sayfasında görünen tanıtım yazısıdır. Bunun için ayrı bir bölüm yok, README.md adında bir dosya oluşturuyorsun ve GitHub onu otomatik olarak ana sayfada gösteriyor.
+
+Yol 1: Dosyayı yükleyerek (en kolayı)
+
+Daha önce gönderdiğim README.md dosyasını sohbetteki dosya kartından indir.
+İndirdiğin dosyayı Not Defteri ile aç ve en alttaki ADIN SOYADIN ile BÖLÜMÜN, OKULUN yerlerini kendi bilgilerinle, en üstteki KULLANICI_ADIN yerini de GitHub kullanıcı adınla (htcyagmur06) değiştirip kaydet.
+GitHub’da projemm repository’ne gir.
+Add file → Upload files’a tıkla.
+README.md dosyasını sürükle ve Commit changes’e bas.
+
+Yol 2: Metni yapıştırarak
+
+Repository’de Add file → Create new file’a tıkla.
+Dosya adı kutusuna README.md yaz.
+İndirdiğin dosyayı Not Defteri’nde aç, hepsini kopyala (Ctrl + A, sonra Ctrl + C) ve GitHub’daki büyük metin kutusuna yapıştır.
+Sağ üstteki Commit changes’e bas.
+
+Repository’de zaten README varsa
+GitHub repository oluştururken “Add a README” seçildiyse dosya zaten vardır. Bu durumda README.md dosyasına tıkla, sağ üstteki kalem simgesine bas, içindekileri silip yeni metni yapıştır ve Commit changes’e bas. İki tane README oluşturma, aynı isimde yüklersen GitHub eskisinin üzerine yazar.
+
+Nasıl göründüğünü kontrol et
+Commit’ten sonra repository ana sayfasına dön. Dosya listesinin hemen altında “README” başlığıyla proje tanıtımın düzgün biçimlenmiş şekilde görünmeli.
+
+Not: README içindeki canlı prototip bağlantısı, GitHub Pages’i açtıktan sonra çalışır. Pages’i açmadıysan bağlantı şimdilik boş sayfaya gider, sorun değil.
+
+ben: böyle oldu doğru mu
+
+Büyük kısmı doğru, ama iki dosya eksik görünüyor.
+
+Doğru olanlar
+
+C# dosyaları yüklenmiş: Program.cs, Models.cs, ZamanAsimiServisi.cs, AkilliPark.csproj ve .gitignore.
+README ana sayfada düzgün görünüyor, AkıllıPark tanıtımı yazıyor.
+ai_log_md ve style.css de duruyor. ai_log_md senin dosyan, ona dokunma.
+Eksik olanlar
+
+wwwroot klasörü (içinde index.html). Listede yok. C# sunucusunun arayüzü bu dosyada, o olmadan proje çalışsa bile ekranda hiçbir şey görünmez.
+prototip-v2 klasörü. Bu da yok. GitHub Pages ile yayınlayacağın sade HTML prototipi burada olacak.
+Dosyalar AkilliPark klasörünün içine değil, ana klasöre yüklenmiş. Bu sorun değil, proje böyle de çalışır. Bu yüzden taşımaya uğraşma, eksik iki dosyayı ana klasöre ekle.
+
+Eksikleri ekleme
+
+wwwroot için:
+
+Add file → Create new file’a tıkla.
+Dosya adı kutusuna wwwroot/index.html yaz (eğik çizgiyi yazınca klasör kendiliğinden oluşur).
+Bilgisayarında açtığın zip klasöründeki wwwroot içindeki index.html dosyasını Not Defteri ile aç, hepsini kopyalayıp metin kutusuna yapıştır.
+Commit changes’e bas.
+prototip-v2 için:
+
+Yine Add file → Create new file.
+Dosya adı kutusuna prototip-v2/index.html yaz.
+Sohbette az önce eklediğim index.html dosyasını indirip aynı şekilde içeriğini yapıştır.
+Commit changes’e bas.
+Küçük bir düzeltme: README’nin en üstünde projemm başlığı ve altında bir açıklama var, onların altından benim yazdığım başlık başlıyor. İstersen README’deki kalem simgesine tıklayıp en üstteki # projemm satırını silebilirsin, böylece tanıtım doğrudan “AkıllıPark” başlığıyla başlar.
+
+Bu iki dosyayı ekleyince ana sayfada wwwroot ve prototip-v2 klasörlerini görmelisin. Eklerken bir yerde takılırsan ekran görüntüsünü at.
+
+ben: oldu mu
+
+Kısmen oldu. Yeni bir dosya eklemişsin ama onun adı yanlış, wwwroot klasörü de hâlâ yok.
+
+Ne olmuş
+
+index (1).html yüklenmiş. Bilgisayarında aynı adlı iki index.html dosyam olduğu için tarayıcı ikincisine (1) eklemiş. Dosya adında boşluk ve parantez olduğu için GitHub Pages bu haliyle sayfayı doğru açmaz.
+README güncellenmiş, bu iyi.
+Önce hangi dosya olduğunu anla
+GitHub’da index (1).html dosyasına tıkla ve içinde fetch kelimesini ara (Ctrl + F).
+
+fetch yoksa: Bu sade HTML prototipidir (v2). Aşağıdaki 1. adıma geç.
+fetch varsa: Bu C# arayüzüdür, wwwroot klasörüne gitmesi gerekir. Bu durumda 2. adımı yap, sade prototip için de bilgisayarındaki diğer dosyayı kullan.
+1. Sade prototipse adını düzelt
+
+index (1).html dosyasını aç.
+Sağ üstteki kalem simgesine tıkla.
+En üstteki dosya adı kutusuna gidip adı index.html yap.
+Commit changes’e bas.
+Böylece GitHub Pages bunu ana sayfa olarak tanır. Adresin şöyle olur: https://htcyagmur06.github.io/projemm/ (repository adın projemm olduğu için).
+
+2. wwwroot klasörünü ekle
+
+Add file → Create new file’a tıkla.
+Dosya adı kutusuna wwwroot/index.html yaz.
+Bilgisayarda açtığın zip klasöründeki wwwroot içindeki index.html dosyasını Not Defteri ile aç, hepsini kopyalayıp yapıştır.
+Commit changes’e bas.
+3. GitHub Pages’i aç
+Settings → Pages’e gir, Branch olarak main ve / (root) seç, Save’e bas. Birkaç dakika sonra yukarıdaki adreste prototip açılır.
+
+4. README’deki bağlantıyı düzelt
+README’de KULLANICI_ADIN.github.io/akillipark/ yazan yeri htcyagmur06.github.io/projemm/ olarak değiştir. Kalem simgesiyle README’yi açıp o satırı düzenleyebilirsin.
+
+Bunları yapınca ana sayfada wwwroot klasörünü, index.html dosyasını ve çalışan canlı demo adresini görmelisin.
+
+ben: şimdi oldu mu
+
+Dosyayı aç
+Ana sayfadaki index.html.html dosyasına tıkla. İçinde çalışan kod görünüyorsa doğru dosyadır, sadece adı yanlış.
+1
+2
+3
+4
+5
+Neredeyse oldu. wwwroot klasörü artık listede, C# dosyaları ve README de yerinde. Tek sorun sade prototip dosyasının adı: index.html.html yazıyor, sonda fazladan bir .html var. GitHub Pages ana sayfa olarak sadece index.html adını tanır, bu yüzden adı düzeltmen gerek.
+
+Yukarıdaki adımlarda bunu ve ardından GitHub Pages’i açmayı anlattım. Adı düzelttikten sonra canlı adres https://htcyagmur06.github.io/projemm/ olacak.
+
+Kontrol etmen gereken bir şey: wwwroot klasörüne tıkla, içinde index.html olduğunu gör. Create index.html commit mesajı orada görünüyor, büyük ihtimalle doğru. Açıp içinde fetch kelimesi geçtiğini görürsen C# arayüzü doğru yerde demektir.
+
+Pages açıldıktan sonra bir iki dakika bekle, sayfa hemen açılmayabilir. Açılmazsa Settings → Pages’te üstte yeşil bir “Your site is live” kutusu çıkana kadar bekle. Ekran görüntüsü atarsan birlikte bakarız.
+
+ben: fetch yazısı nerde olmalı
+
+Locating the fetch call in the front-end script.
+Locating the fetch call in the front-end script.
+fetch kelimesi wwwroot klasöründeki index.html dosyasının içinde olmalı, <script> bölümünün başında (dosyanın alt kısmında) api adlı fonksiyonda geçer:
+
+js
+async function api(url,method='GET',body){
+  try{
+    const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:...});
+Bu kelime C# sunucusuna bağlanan arayüzü gösterir, yani /api/yerler ve /api/giris gibi adreslerle konuşan kısım odur.
+
+GitHub’da nasıl kontrol edersin
+
+Repository’de wwwroot klasörüne, sonra içindeki index.html dosyasına tıkla.
+Kod ekranında klavyeden Ctrl + F tuşlarına bas. GitHub kendi arama kutusunu açar.
+Kutuya fetch yaz. Eşleşme çıkıyorsa doğru dosyadır.
+Aynı dosyada /api/yerler aratırsan da geçtiğini görürsün.
+İki dosyanın farkı
+
+wwwroot/index.html: fetch var. Veriyi C# sunucusundan alır.
+Ana klasördeki index.html (eski adıyla index.html.html): fetch yok. Veriyi tarayıcıda tutar, GitHub Pages’te çalışacak sade prototiptir.
+Eğer wwwroot/index.html içinde fetch yoksa yanlış dosyayı yapıştırmış olabilirsin. Bu durumda bilgisayarında açtığın zip klasöründeki wwwroot içindeki index.html dosyasını kopyalayıp GitHub’daki dosyanın kalem simgesinden içeriği değiştir.
+
+Ana klasördeki sade prototipte fetch aratıp bulamazsan sorun yok, orada olmaması normal.
+
+ben: buldum tam da dediğin yerde şimdi olmuş sayılır mı
+
+Evet, wwwroot/index.html doğru dosya. Orada fetch varsa C# arayüzü yerinde demektir.
+
+Tamamlanmış olanlar
+
+C# kodları (Program.cs, Models.cs, ZamanAsimiServisi.cs, AkilliPark.csproj)
+wwwroot/index.html (sunucuya bağlı arayüz)
+README
+Kalan iki iş
+
+index.html.html dosyasının adını index.html yap. Kalem simgesine tıklayıp adı düzeltmen yeterli.
+GitHub Pages’i aç. Settings → Pages’te main ve / (root) seçip Save’e bas. Birkaç dakika sonra https://htcyagmur06.github.io/projemm/ adresinde sade prototip açılır.
+Bu ikisini bitirince README’deki KULLANICI_ADIN.github.io/akillipark/ yazan bağlantıyı da yeni adresinle değiştir.
+
+Pages adresinde ekranda park yerlerini görürsen proje GitHub tarafında tamamdır. C# kısmı GitHub’da sadece saklanır, çalıştırmak için bilgisayarında dotnet run gerekir.
+
+Adımlardan birinde takılırsan ekran görüntüsünü at, oradan devam edelim.
+
+
+
+
+
+
+
